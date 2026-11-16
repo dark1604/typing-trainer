@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="uk" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Keyris — Тетріс-тренажер швидкого друку</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&display=swap"
+    rel="stylesheet"
+  />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <!-- Ambient Aurora & Blueprint Grid -->
+  <div class="aurora-bg" aria-hidden="true">
+    <div class="aurora-orb orb-1"></div>
+    <div class="aurora-orb orb-2"></div>
+    <div class="aurora-orb orb-3"></div>
+  </div>
+  <div class="grid-pattern" aria-hidden="true"></div>
+
+  <!-- Mobile / Tablet Blocker -->
+  <div id="deviceBlocker" class="device-blocker hidden" role="dialog" aria-modal="true" aria-labelledby="blockerTitle">
+    <div class="glass-card blocker-card">
+      <div class="blocker-icon" aria-hidden="true">💻</div>
+      <div class="pill-live blocker-pill">Фізична клавіатура</div>
+      <h2 id="blockerTitle" class="overlay-title">Тільки для ПК та ноутбуків</h2>
+      <p class="overlay-desc">
+        Тренажер швидкого друку <strong>Keyris</strong> розроблений для роботи з фізичною клавіатурою. Будь ласка, відкрий цей сайт на комп’ютері або ноутбуці.
+      </p>
+    </div>
+  </div>
+
+  <div class="app-shell">
+    <!-- Top Glass Navbar -->
+    <header class="glass-nav">
+      <div class="brand">
+        <div class="brand-logo" aria-hidden="true">⌨️</div>
+        <div>
+          <span class="brand-title wow-gradient-text">Keyris</span>
+          <span class="brand-badge">4–9 класи</span>
+        </div>
+      </div>
+
+      <div class="nav-controls">
+        <div class="segmented-control" role="group" aria-label="Режим гри">
+          <button class="seg-btn active" data-mode="letters" title="Окремі літери (4–5 клас)">Літери</button>
+          <button class="seg-btn" data-mode="words" title="Слова (6–7 клас)">Слова</button>
+          <button class="seg-btn" data-mode="code" title="Код та IT-терміни (8–9 клас)">Код</button>
+          <button class="seg-btn" data-mode="test" title="Тест швидкості на 60 секунд">⏱ Тест 60с</button>
+        </div>
+
+        <div class="segmented-control" role="group" aria-label="Мова розкладки">
+          <button class="seg-btn active" data-lang="ua">UA</button>
+          <button class="seg-btn" data-lang="en">EN</button>
+        </div>
+
+        <button id="toggleKeyboardBtn" class="icon-pill active" title="Показати/сховати підказку клавіатури">
+          <span>⌨️</span>
+          <span class="hide-sm">Підказка</span>
+        </button>
+
+        <button id="toggleSoundBtn" class="icon-pill active" title="Звукові ефекти">
+          <span id="soundIcon">🔊</span>
+        </button>
+
+        <button id="toggleThemeBtn" class="icon-pill" title="Змінити тему">
+          <span id="themeIcon">☀️</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Main Bento Workspace -->
+    <main class="bento-layout">
+      <!-- Left Panel: Level, Combo, Alerts -->
+      <aside class="side-panel left-panel">
+        <div class="glass-card stat-card accent-indigo">
+          <div class="card-label">РІВЕНЬ ШВИДКОСТІ</div>
+          <div class="level-row">
+            <span id="levelValue" class="big-stat">1</span>
+            <span id="speedMult" class="mono-tag">1.0x</span>
+          </div>
+          <div class="progress-track">
+            <div id="levelProgress" class="progress-fill indigo-fill" style="width: 0%"></div>
+          </div>
+          <p id="levelHint" class="card-hint">Кожні 10 блоків прискорюють падіння</p>
+        </div>
+
+        <div class="glass-card stat-card accent-amber">
+          <div class="card-label">КОМБО-ОЧИЩЕННЯ</div>
+          <div class="level-row">
+            <span id="comboValue" class="big-stat">0<span class="muted">/10</span></span>
+            <span class="mono-tag amber-tag">🔥 x<span id="multiplierValue">1</span></span>
+          </div>
+          <div class="progress-track">
+            <div id="comboProgress" class="progress-fill amber-fill" style="width: 0%"></div>
+          </div>
+          <p class="card-hint">10 без помилок = спалює нижній ряд каменів!</p>
+        </div>
+
+        <div id="layoutAlert" class="glass-card alert-card hidden">
+          <span class="alert-dot"></span>
+          <div>
+            <div class="alert-title">Перевір розкладку!</div>
+            <div id="layoutAlertText" class="alert-sub">Увімкни українську (UA)</div>
+          </div>
+        </div>
+
+        <div id="capsAlert" class="glass-card alert-card caps-alert hidden">
+          <span class="alert-dot caps-dot"></span>
+          <div>
+            <div class="alert-title caps-title">Caps Lock увімкнено!</div>
+            <div class="alert-sub">Натисни Caps Lock, щоб вимкнути</div>
+          </div>
+        </div>
+
+        <div class="glass-card legend-card">
+          <div class="card-label">СПЕЦБЛОКИ</div>
+          <div class="legend-item">
+            <span class="legend-dot dot-normal"></span>
+            <span>Звичайний блок</span>
+          </div>
+          <div class="legend-item">
+            <span class="legend-dot dot-freeze"></span>
+            <span>❄️ Заморозка часу (4с)</span>
+          </div>
+          <div class="legend-item">
+            <span class="legend-dot dot-fast"></span>
+            <span>⚡ Метеор (2x балів)</span>
+          </div>
+        </div>
+      </aside>
+
+      <!-- Center: Tetris Well -->
+      <section class="well-wrapper">
+        <div class="glass-card well-frame" id="wellFrame">
+          <div class="well-header">
+            <div class="window-dots" aria-hidden="true">
+              <span class="dot red"></span>
+              <span class="dot yellow"></span>
+              <span class="dot green"></span>
+            </div>
+            <span class="well-title mono-tag">keyris_arena.exe</span>
+            <span id="testTimerBadge" class="mono-tag amber-tag hidden">⏱ 01:00</span>
+            <button id="pauseBtn" class="mini-btn" title="Пауза (Esc)">⏸ Пауза</button>
+          </div>
+
+          <div class="tetris-well" id="tetrisWell">
+            <!-- Danger Line -->
+            <div class="danger-line">
+              <span>НЕБЕЗПЕЧНА ЗОНА</span>
+            </div>
+
+            <!-- Freeze Overlay -->
+            <div id="freezeBanner" class="freeze-banner hidden">❄️ ЧАС ЗАМОРОЖЕНО</div>
+
+            <!-- Settled Stone Grid -->
+            <div id="settledLayer" class="settled-layer"></div>
+
+            <!-- Falling Blocks Layer -->
+            <div id="fallingLayer" class="falling-layer"></div>
+
+            <!-- Particles Layer -->
+            <div id="particlesLayer" class="particles-layer"></div>
+
+            <!-- Start / Pause / Game Over Overlay -->
+            <div id="wellOverlay" class="well-overlay">
+              <div class="overlay-content" id="startScreen">
+                <div class="pill-live">
+                  <span class="live-dot"></span>
+                  <span>Готово до старту</span>
+                </div>
+                <h1 class="overlay-title">Друкуй, поки не впало!</h1>
+                <p class="overlay-desc">
+                  Встигай набирати літери та слова до того, як вони перетворяться на кам'яні блоки на дні.
+                </p>
+                <button id="startBtn" class="portal-btn-pulse">
+                  Почати гру <span class="kbd-hint">Enter</span>
+                </button>
+              </div>
+
+              <div class="overlay-content hidden" id="pauseScreen">
+                <h2 class="overlay-title">Пауза</h2>
+                <p class="overlay-desc">Натисни кнопку або <kbd>Esc</kbd>, щоб продовжити.</p>
+                <button id="resumeBtn" class="portal-btn-pulse">Продовжити</button>
+              </div>
+
+              <div class="overlay-content hidden" id="gameOverScreen">
+                <div class="rank-badge" id="finalRank">A</div>
+                <h2 class="overlay-title" id="finalTitle">Гру завершено!</h2>
+                <div id="speedLevelPill" class="speed-level-pill hidden"></div>
+                <p id="speedLevelDesc" class="overlay-desc hidden"></p>
+                <div class="final-stats-grid">
+                  <div class="final-stat">
+                    <span class="final-label">Рахунок</span>
+                    <span class="final-val" id="finalScore">0</span>
+                  </div>
+                  <div class="final-stat">
+                    <span class="final-label">Швидкість</span>
+                    <span class="final-val" id="finalSpeed">0 зн/хв</span>
+                  </div>
+                  <div class="final-stat">
+                    <span class="final-label">Точність</span>
+                    <span class="final-val" id="finalAccuracy">100%</span>
+                  </div>
+                </div>
+                <div id="trapKeysBox" class="trap-keys-box hidden">
+                  <span class="trap-label">Клавіші-пастки:</span>
+                  <div id="trapKeysList" class="trap-keys-list"></div>
+                </div>
+                <button id="restartBtn" class="portal-btn-pulse">
+                  Зіграти ще раз <span class="kbd-hint">Enter</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Right Panel: Live Metrics -->
+      <aside class="side-panel right-panel">
+        <div class="glass-card stat-card accent-cyan">
+          <div class="card-label">ШВИДКІСТЬ</div>
+          <div class="level-row">
+            <span id="speedValue" class="big-stat">0</span>
+            <span class="mono-tag cyan-tag">зн/хв</span>
+          </div>
+          <p class="card-hint" id="wpmSub">0 WPM</p>
+        </div>
+
+        <div class="glass-card stat-card accent-emerald">
+          <div class="card-label">ТОЧНІСТЬ</div>
+          <div class="level-row">
+            <span id="accuracyValue" class="big-stat">100%</span>
+            <span class="mono-tag emerald-tag" id="hitsValue">0 ударів</span>
+          </div>
+          <p class="card-hint" id="errorsSub">Помилок: 0</p>
+        </div>
+
+        <div class="glass-card stat-card accent-indigo">
+          <div class="card-label">РАХУНОК</div>
+          <div id="scoreValue" class="big-stat">0</div>
+          <div class="record-row">
+            <span>🏆 Рекорд:</span>
+            <strong id="highScoreValue">0</strong>
+          </div>
+        </div>
+      </aside>
+    </main>
+
+    <!-- Bottom Optional Mini Keyboard Hint -->
+    <section id="keyboardSection" class="keyboard-section">
+      <div class="glass-card keyboard-card" id="virtualKeyboard"></div>
+    </section>
+  </div>
+
+  <script src="dictionary.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
